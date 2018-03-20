@@ -1,10 +1,11 @@
-package nl.utwente.ing.testing;
+package nl.utwente.ing.team.e.testing;
 
-import static io.restassured.RestAssured.*;
-import static io.restassured.matcher.RestAssuredMatchers.*;
-import static org.hamcrest.Matchers.*;
+import org.junit.Test;
 
-public class InitialSystemTest {
+import static com.jayway.restassured.RestAssured.when;
+import static org.hamcrest.Matchers.equalTo;
+
+public class BaseTest {
 
     @Test
     public void transactionIdTest() {
@@ -14,7 +15,7 @@ public class InitialSystemTest {
                 then().
                 statusCode(200).
                 body("id", equalTo(0),
-                        "date", /* this is where the date should be */,
+                        "date", equalTo(0),
                         "amount", equalTo(0),
                         "external-iban", equalTo("string"),
                         "type:", equalTo("deposit"),
@@ -24,12 +25,12 @@ public class InitialSystemTest {
 
     @Test
     public void categoryIdTest() {
-        when.
-                get("/categories/{id", 0) /
+        when().
+                get("/categories/{id", 0).
                 then().
-                        statusCode(200).
-                        body("id", equalTo(0),
-                                "name", equalTo("string"));
+                statusCode(200).
+                body("id", equalTo(0),
+                        "name", equalTo("string"));
     }
 
 }
