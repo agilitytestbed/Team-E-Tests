@@ -21,7 +21,7 @@ public class BaseTest {
                 then().assertThat().
                 statusCode(200).
                 contentType("application/json").
-                body(//TODO; add the body);
+                body(null); //Still needs a body
     }
 
     @Test
