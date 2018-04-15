@@ -67,14 +67,64 @@ public class BaseTest {
     }
 
     @Test
-    public void categoryTest(){
+    public void categoryIdCategory() {
+        JSONObject CAT_ID_CAT = new JSONObject();
+        CAT_ID_CAT.append("category_id", 313);
+        JSONObject WRONG_CAT_ID_CAT = new JSONObject();
+        WRONG_CAT_ID_CAT.append("category_id", Double.POSITIVE_INFINITY);
+        given().
+                parameters("transactionid", 0, "category_id", CAT_ID_CAT).
+                when().
+                patch(TRANSACTIONS_ID_CATEGORY).
+                then().
+                statusCode(200).
+                body("id", equalTo(0),
+                        "date", equalTo(0),
+                        "amount", equalTo(0),
+                        "external-iban", equalTo("string"),
+                        "type:", equalTo("deposit"),
+                        "category.id", equalTo(0),
+                        "category.name", equalTo("groceries"));
+
+        given().
+                parameters("transactionid", 0, "category_id", WRONG_CAT_ID_CAT).
+                when().
+                patch(TRANSACTIONS_ID_CATEGORY).
+                then().
+                statusCode(404);
+    }
+
+    @Test
+    public void categoryTest() {
+        JSONObject GROCERIES = new JSONObject();
+        GROCERIES.append("name", "groceries");
+        JSONObject WRONG_GROCERIES = new JSONObject();
+        WRONG_GROCERIES.append("some string", "some more string");
         given().
                 parameters("offset", 0, "limit", 0, "category", "category-name").
                 when().
-                get(TRANSACTIONS).
+                get(CATEGORIES).
                 then().
+                statusCode(200).
                 body("category.name", equalTo("category-name"));
+
+        given().
+                parameter(GROCERIES.toString()).
+                when().
+                put(CATEGORIES).
+                then().
+                statusCode(201).
+                body("id", equalTo(25),
+                        "name", equalTo("groceries"));
+
+        given().
+                parameter(WRONG_GROCERIES.toString()).
+                when().
+                put(CATEGORIES).
+                then().
+                statusCode(405);
     }
+
     @Test
     public void categoryIdTest() {
         JSONObject CATEGORY_PUT = new JSONObject();
@@ -116,7 +166,6 @@ public class BaseTest {
                 statusCode(204);
 
     }
-
 
 
 }
