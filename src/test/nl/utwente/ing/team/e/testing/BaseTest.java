@@ -3,23 +3,44 @@ package nl.utwente.ing.team.e.testing;
 import org.json.JSONObject;
 import org.junit.Test;
 
-import static com.jayway.restassured.RestAssured.when;
 import static com.jayway.restassured.RestAssured.given;
+import static com.jayway.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.equalTo;
 
 
 public class BaseTest {
 
-    private static final String SESSIONS = "/SESSIONS";
-    private static final String TRANSACTIONS = "/TRANSACTIONS";
-    private static final String TRANSACTIONS_ID = "/TRANSACTIONS/{id}";
-    private static final String TRANSACTIONS_ID_CATEGORY = "/TRANSACTIONS/{id}/category";
-    private static final String CATEGORIES = "/categories";
-    private static final String CATEGORIES_ID = "/categories/{id}";
+    public final static String HOSTNAME = "http://localhost:8080";
+    public final static String VERSION = "/api/v1";
+    private static final String SESSIONS = HOSTNAME + VERSION + "/sessions";
+    private static final String TRANSACTIONS = HOSTNAME + VERSION + "/transactions";
+    private static final String TRANSACTIONS_ID = HOSTNAME + VERSION + "/transactions/{id}";
+    private static final String TRANSACTIONS_ID_CATEGORY = HOSTNAME + VERSION + "/transactions/{id}/category";
+    private static final String CATEGORIES = HOSTNAME + VERSION + "/categories";
+    private static final String CATEGORIES_ID = HOSTNAME + VERSION + "/categories/{id}";
 
-    //Here should come all the endpooints of the api
-
+    //Here should come all the endpoints of the api
+    /*
+     - Add javadoc to each test, no clue what they do
+     - Each endpoint should have at least a test
+     - Add data before that test is ran
+     - Test execution order is random, so new session for each test
+     - Make sure to check whether each endpoint returns multiple or single values,
+       currently you this does not match for some endpoints
+     */
     //SESSIONS
+
+    public int setup() {
+        // TODO: Use this to create a new session for each test
+        return given().
+                when().
+                post(SESSIONS).
+                then().
+                assertThat().
+                statusCode(201).
+                extract()
+                .path("id");
+    }
 
     @Test
     public void getSession() {
@@ -33,9 +54,25 @@ public class BaseTest {
 
     @Test
     public void transcationsTest() {
+        int id = setup();
         given().
-                parameters("offset", 0, "limit", 0, "category", "category-name").
+                // This is how you use session id to actually be authorized
+                        header("X-session-ID", id).
                 when().
+                get(TRANSACTIONS).
+                then().assertThat()
+                .statusCode(200)
+                .contentType("application/json");
+    }
+
+    @Test
+    public void transcationsTestWithParameters() {
+        int id = setup();
+        //Need to add items before you do a get test
+        //Test with offset and limit to see whether they work
+        given().
+                // TODO: Add parameters
+                        when().
                 get(TRANSACTIONS).
                 then().
                 body("category.name", equalTo("category-name"));
@@ -43,6 +80,9 @@ public class BaseTest {
 
     @Test
     public void transactionIdTest() {
+        int id = setup();
+
+        // This test will never work if you don't insert a transaction before you run this test
         when().
                 get(TRANSACTIONS_ID, 0).
                 then().
@@ -50,7 +90,7 @@ public class BaseTest {
                 body("id", equalTo(0),
                         "date", equalTo(0),
                         "amount", equalTo(0),
-                        "external-iban", equalTo("string"),
+                        "externalIBAN", equalTo("string"),
                         "type:", equalTo("deposit"),
                         "category.id", equalTo(0),
                         "category.name", equalTo("string"));
@@ -68,6 +108,8 @@ public class BaseTest {
 
     @Test
     public void categoryIdCategory() {
+        int id = setup();
+
         JSONObject CAT_ID_CAT = new JSONObject();
         CAT_ID_CAT.append("category_id", 313);
         JSONObject WRONG_CAT_ID_CAT = new JSONObject();
@@ -96,6 +138,8 @@ public class BaseTest {
 
     @Test
     public void categoryTest() {
+        int id = setup();
+
         JSONObject GROCERIES = new JSONObject();
         GROCERIES.append("name", "groceries");
         JSONObject WRONG_GROCERIES = new JSONObject();
@@ -127,6 +171,8 @@ public class BaseTest {
 
     @Test
     public void categoryIdTest() {
+        int id = setup();
+
         JSONObject CATEGORY_PUT = new JSONObject();
         CATEGORY_PUT.append("name", "string");
 //        JSONObject CATEGORY_PUT_BODY = new JSONObject();
