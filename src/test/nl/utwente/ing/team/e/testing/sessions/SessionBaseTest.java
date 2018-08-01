@@ -5,7 +5,7 @@ import org.junit.Test;
 import static com.jayway.restassured.RestAssured.when;
 
 
-public class Session_base_test {
+public class SessionBaseTest {
 
     public final static String HOSTNAME = "http://localhost:8080";
     public final static String VERSION = "/api/v1";

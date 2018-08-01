@@ -1,15 +1,13 @@
 package nl.utwente.ing.team.e.testing.categories;
 
 import org.json.JSONObject;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.equalTo;
 
 
-public class Category_base_test {
+public class CategoryBaseTest {
 
     private final static String HOSTNAME = "http://localhost:8080";
     private final static String VERSION = "/api/v1";
@@ -43,20 +41,7 @@ public class Category_base_test {
     }
 
     @Test
-    public void getSession() {
-        /**
-         * Tests whether sessions work
-         */
-        when().
-                post(SESSIONS).
-                then().assertThat().
-                statusCode(201).
-                contentType("application/json");
-    }
-
-
-    @Test
-    public void categoryTest() {
+    public void categoryCreateTest() {
         int id = setup();
 
         JSONObject category = new JSONObject();
@@ -107,72 +92,74 @@ public class Category_base_test {
     }
 
     @Test
-    @Ignore
     public void categoryIdTest() {
         int id = setup();
 
-        JSONObject CATEGORY_PUT = new JSONObject();
-        CATEGORY_PUT.put("name", "string");
+        JSONObject category = new JSONObject();
+        category.put("name", "string");
 
-
-
-        given().
+        int categoryid = given().
                 header("X-session-ID",id).
+                header("Content-Type", "application/json").
+                body(category.toString()).
                 when().
-                get(CATEGORIES_ID, 0).
+                post(CATEGORIES).
                 then().
                 assertThat().
-                statusCode(200).
-                contentType("aaplication/json").
-                body("id", equalTo(0),
-                        "name", equalTo("string"));
-        /**
-         *
-         */
+                statusCode(201).
+                contentType("application/json").
+                body("name", equalTo("string")).
+                extract().path("id");
+
         given().
                 header("X-session-ID",id).
                 when().
-                get(CATEGORIES_ID, "Some String").
+                get(CATEGORIES_ID, categoryid).
                 then().
-                statusCode(400);
-        /**
-         * Get category, id not found
-         */
+                statusCode(200);
+
         given().
                 header("X-session-ID",id).
                 when().
-                get(CATEGORIES_ID, Double.POSITIVE_INFINITY).
+                get(CATEGORIES_ID, 45656).
                 then().
                 statusCode(404);
-        /**
-         * Put category id: updating a category
-         */
-        given().
+
+    }
+
+    @Test
+    public void categoryDeleteTest() {
+        int id = setup();
+
+        JSONObject category = new JSONObject();
+        category.put("name", "string");
+
+        int categoryid = given().
                 header("X-session-ID",id).
-                parameters("categoryId", 25, "body", CATEGORY_PUT).
+                header("Content-Type", "application/json").
+                body(category.toString()).
                 when().
-                put(CATEGORIES_ID).
+                post(CATEGORIES).
                 then().
-                contentType("aaplication/json").
-                body("id", equalTo(25), "name", equalTo("groceries"));
-        /**
-         * Delete category: id not found
-         */
+                assertThat().
+                statusCode(201).
+                contentType("application/json").
+                body("name", equalTo("string")).
+                extract().path("id");
+
         given().
                 header("X-session-ID",id).
                 when().
-                delete(CATEGORIES_ID, Double.POSITIVE_INFINITY).
+                delete(CATEGORIES_ID, 45455).
                 then().
                 statusCode(404);
 
         given().
                 header("X-session-ID",id).
                 when().
-                delete(CATEGORIES_ID, 0).
+                delete(CATEGORIES_ID, categoryid).
                 then().
                 statusCode(204);
 
     }
-
-
 }

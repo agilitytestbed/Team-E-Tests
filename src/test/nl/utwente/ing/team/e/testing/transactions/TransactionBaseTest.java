@@ -1,13 +1,12 @@
 package nl.utwente.ing.team.e.testing.transactions;
 
 import org.json.JSONObject;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
-public class Transaction_base_test {
+public class TransactionBaseTest {
 
     private final static String HOSTNAME = "http://localhost:8080";
     private final static String VERSION = "/api/v1";
@@ -15,6 +14,9 @@ public class Transaction_base_test {
     private static final String TRANSACTIONS = HOSTNAME + VERSION + "/transactions";
     private static final String TRANSACTIONS_ID = HOSTNAME + VERSION + "/transactions/{id}";
     private static final String TRANSACTIONS_ID_CATEGORY = HOSTNAME + VERSION + "/transactions/{id}/category";
+
+    private static final String CATEGORIES = HOSTNAME + VERSION + "/categories";
+    private static final String CATEGORIES_ID = HOSTNAME + VERSION + "/categories/{id}";
 
     //Here should come all the endpoints of the api
     /*
@@ -131,8 +133,8 @@ public class Transaction_base_test {
                 statusCode(200).
                 contentType("application/json").
                 body("id", equalTo(transactionId),
-                        "date", equalTo("1525524719197"),
-                        "amount", equalTo("100.0"),
+                        "date", equalTo(1525524719197L),
+                        "amount", equalTo(100.0f),
                         "externalIBAN", equalTo("NL39RABO0300065264"),
                         "type", equalTo("deposit"));
 
@@ -146,42 +148,122 @@ public class Transaction_base_test {
         given().
                 header("X-session-ID", id).
                 when().
-                get(TRANSACTIONS_ID, Double.POSITIVE_INFINITY).
+                get(TRANSACTIONS_ID, 4545).
                 then().
                 statusCode(404);
     }
 
     @Test
-    @Ignore
-    public void transactionIdCategory() {
+    public void transactionCategory() {
         int id = setup();
 
-        JSONObject CAT_ID_CAT = new JSONObject();
-        CAT_ID_CAT.append("category_id", 313);
-        JSONObject WRONG_CAT_ID_CAT = new JSONObject();
-        WRONG_CAT_ID_CAT.put("category_id", Double.MAX_VALUE);
-        given().
+        JSONObject categoryObj = new JSONObject();
+        categoryObj.put("name", "test");
+
+        int categoryId = given().
                 header("X-session-ID", id).
-                parameters("transactionid", 0, "category_id", CAT_ID_CAT).
+                header("Content-Type", "application/json").
+                body(categoryObj.toString()).
                 when().
-                patch(TRANSACTIONS_ID_CATEGORY).
+                post(CATEGORIES).
                 then().
-                statusCode(200).
-                contentType("aaplication/json").
-                body("id", equalTo(0),
-                        "date", equalTo(0),
-                        "amount", equalTo(0),
-                        "external-iban", equalTo("string"),
-                        "type:", equalTo("deposit"),
-                        "category.id", equalTo(0),
-                        "category.name", equalTo("groceries"));
+                assertThat().
+                statusCode(201).
+                contentType("application/json").
+                extract().path("id");
+
+        JSONObject transaction = new JSONObject();
+        transaction.put("date", "2018-05-05T12:51:59.197Z");
+        transaction.put("amount", 100);
+        transaction.put("externalIBAN", "NL39RABO0300065264");
+        transaction.put("type", "deposit");
+        int transactionId = given().header("X-session-ID", id).
+                header("Content-Type", "application/json").
+                body(transaction.toString()).
+                when().
+                post(TRANSACTIONS).
+                then().assertThat().
+                statusCode(201).
+                extract().path("id");
+
+        JSONObject assigncategory = new JSONObject();
+        assigncategory.put("category_id", categoryId);
 
         given().
                 header("X-session-ID", id).
-                parameters("transactionid", 0, "category_id", WRONG_CAT_ID_CAT).
+                header("Content-Type", "application/json").
+                body(assigncategory.toString()).
                 when().
-                patch(TRANSACTIONS_ID_CATEGORY).
+                patch(TRANSACTIONS + "/" + transactionId + "/category").
+                then().assertThat().
+                statusCode(200);
+
+        given().
+                header("X-session-ID", id).
+                when().
+                get(TRANSACTIONS_ID, transactionId).
                 then().
-                statusCode(404);
+                statusCode(200).
+                contentType("application/json").
+                body("id", equalTo(transactionId),
+                        "date", equalTo(1525524719197L),
+                        "amount", equalTo(100.0f),
+                        "externalIBAN", equalTo("NL39RABO0300065264"),
+                        "type", equalTo("deposit"),
+                        "category.id", equalTo(categoryId));
+
+    }
+
+    @Test
+    public void deleteTransaction() {
+        int id = setup();
+
+        JSONObject categoryObj = new JSONObject();
+        categoryObj.put("name", "test");
+
+        int categoryId = given().
+                header("X-session-ID", id).
+                header("Content-Type", "application/json").
+                body(categoryObj.toString()).
+                when().
+                post(CATEGORIES).
+                then().
+                assertThat().
+                statusCode(201).
+                contentType("application/json").
+                extract().path("id");
+
+        JSONObject transaction = new JSONObject();
+        transaction.put("date", "2018-05-05T12:51:59.197Z");
+        transaction.put("amount", 100);
+        transaction.put("externalIBAN", "NL39RABO0300065264");
+        transaction.put("type", "deposit");
+        int transactionId = given().header("X-session-ID", id).
+                header("Content-Type", "application/json").
+                body(transaction.toString()).
+                when().
+                post(TRANSACTIONS).
+                then().assertThat().
+                statusCode(201).
+                extract().path("id");
+
+        JSONObject assigncategory = new JSONObject();
+        assigncategory.put("category_id", categoryId);
+
+        given().
+                header("X-session-ID", id).
+                header("Content-Type", "application/json").
+                body(assigncategory.toString()).
+                when().
+                patch(TRANSACTIONS + "/" + transactionId + "/category").
+                then().assertThat().
+                statusCode(200);
+
+        given().
+                header("X-session-ID", id).
+                when().
+                delete(TRANSACTIONS_ID, transactionId).
+                then().assertThat().
+                statusCode(204);
     }
 }
