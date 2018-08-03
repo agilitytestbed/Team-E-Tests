@@ -266,4 +266,57 @@ public class TransactionBaseTest {
                 then().assertThat().
                 statusCode(204);
     }
+
+    @Test
+    public void transactionUpdateTest() {
+        int id = setup();
+
+        JSONObject transaction = new JSONObject();
+        transaction.put("date", "2018-05-05T12:51:59.197Z");
+        transaction.put("amount", 100);
+        transaction.put("externalIBAN", "NL39RABO0300065264");
+        transaction.put("type", "deposit");
+        int transactionId = given().header("X-session-ID", id).
+                header("Content-Type", "application/json").
+                body(transaction.toString()).
+                when().
+                post(TRANSACTIONS).
+                then().assertThat().
+                statusCode(201).
+                extract().path("id");
+
+        // This test will never work if you don't insert a transaction before you run this test
+        given().
+                header("X-session-ID", id).
+                when().
+                get(TRANSACTIONS_ID, transactionId).
+                then().
+                statusCode(200).
+                contentType("application/json").
+                body("id", equalTo(transactionId),
+                        "date", equalTo(1525524719197L),
+                        "amount", equalTo(100.0f),
+                        "externalIBAN", equalTo("NL39RABO0300065264"),
+                        "type", equalTo("deposit"));
+
+        JSONObject transactionUpdate = new JSONObject();
+        transactionUpdate.put("date", "2018-05-05T12:51:59.197Z");
+        transactionUpdate.put("amount", 200);
+        transactionUpdate.put("externalIBAN", "NL39RABO0300065265");
+        transactionUpdate.put("type", "deposit");
+
+        given().header("X-session-ID", id).
+                header("Content-Type", "application/json").
+                body(transactionUpdate.toString()).
+                when().
+                put(TRANSACTIONS_ID, transactionId).
+                then().assertThat().
+                statusCode(200).
+                body("id", equalTo(transactionId),
+                        "date", equalTo(1525524719197L),
+                        "amount", equalTo(200.0f),
+                        "externalIBAN", equalTo("NL39RABO0300065265"),
+                        "type", equalTo("deposit"));
+
+    }
 }

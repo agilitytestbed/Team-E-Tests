@@ -162,4 +162,59 @@ public class CategoryBaseTest {
                 statusCode(204);
 
     }
+
+    @Test
+    public void categoryUpdateTest() {
+        int id = setup();
+
+        JSONObject category = new JSONObject();
+        category.put("name", "string");
+
+        int categoryid = given().
+                header("X-session-ID", id).
+                header("Content-Type", "application/json").
+                body(category.toString()).
+                when().
+                post(CATEGORIES).
+                then().
+                assertThat().
+                statusCode(201).
+                contentType("application/json").
+                body("name", equalTo("string")).
+                extract().path("id");
+
+        given().
+                header("X-session-ID", id).
+                when().
+                get(CATEGORIES_ID, categoryid).
+                then().
+                body("name", equalTo("string")).
+                statusCode(200);
+
+        JSONObject updateCategory = new JSONObject();
+        updateCategory.put("name", "UPDATE");
+
+        given().
+                header("X-session-ID", id).
+                header("Content-Type", "application/json").
+                body(updateCategory.toString()).
+                when().
+                put(CATEGORIES_ID, categoryid).
+                then().
+                assertThat().
+                statusCode(200).
+                contentType("application/json").
+                body("name", equalTo("UPDATE"),
+                        "id", equalTo(categoryid));
+
+        given().
+                header("X-session-ID", id).
+                when().
+                get(CATEGORIES_ID, categoryid).
+                then().
+                body("name", equalTo("UPDATE")).
+                statusCode(200);
+
+    }
+
 }
