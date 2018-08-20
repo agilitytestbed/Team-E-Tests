@@ -5,8 +5,9 @@ import org.junit.Test;
 
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
-
-
+/**
+    @author Frank van Mourik
+ */
 public class CategoryBaseTest {
 
     private final static String HOSTNAME = "http://localhost:8080";
