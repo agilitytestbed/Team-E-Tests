@@ -291,4 +291,36 @@ public class balanceHistoryTest {
                         "[0].low", equalTo(0.0f),
                         "[0].high", equalTo(50000.0f));
     }
+
+    @Test
+    public void earlierTransactionTest(){
+        int id = setup();
+
+        JSONObject transaction5 = new JSONObject();
+        transaction5.put("date", "2018-08-20T0:34:59.197Z");
+        transaction5.put("amount", 50000);
+        transaction5.put("externalIBAN", "NL39RABO0300065264");
+        transaction5.put("type", "deposit");
+        given().header("X-session-ID", id).
+                header("Content-Type", "application/json").
+                body(transaction5.toString()).
+                when().
+                post(TRANSACTIONS).
+                then().assertThat().
+                statusCode(201).
+                extract().
+                path("amount");
+        given().
+                header("X-session-ID", id).
+                parameters("interval", "hour", "intervals", 1).
+                when().
+                get(BALANCEHISTORY).
+                then().
+                statusCode(200).
+                body("[0].open", equalTo(50000.0f),
+                        "[0].close", equalTo(50000.0f),
+                        "[0].volume", equalTo(0.0f),
+                        "[0].low", equalTo(50000.0f),
+                        "[0].high", equalTo(50000.0f));
+    }
 }
